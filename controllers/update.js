@@ -21,14 +21,14 @@ const update = (request, response) => {
     response.json({
       kubeUpdate: `${request.body.image}:${request.body.tag} has been successfully updated`,
     }); // echo the result back
-    shell.exec('../ShellScript/updatePortalFrontend.sh')
+    shell.exec('microk8s kubectl rollout restart deployment uat-develop-portal-frontend')
   }
 
   if ((request.body.image == "crmcard_ui") & (request.body.tag == "master")) {
     response.json({
       kubeUpdate: `${request.body.image}:${request.body.tag} has been successfully updated`,
     }); // echo the result back
-    shell.exec('../ShellScript/updateCrmCard.sh')
+    shell.exec('microk8s kubectl rollout restart deployment uat-master-crmcard-ui')
   }
 
   console.log(request.body.tag);
