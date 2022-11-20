@@ -1,9 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const {
-    updateContainers
-} = require("../controllers/update");
+const { update } = require("../controllers/update");
 
-router.route("/").post(updateContainers)
+router.route("/").post(update);
 
 module.exports = router;
