@@ -4,7 +4,7 @@ const updateContainers = (request, response) => {
     
         // shell.exec('../ShellScript/updateKubePod.sh')
     
-        console.log(request.body);      // your JSON
+        console.log(request.body);
         console.log(request.body.image);
     
         if((request.body.image == "atomportal") & (request.body.tag == "develop")) {
