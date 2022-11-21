@@ -6,10 +6,14 @@ const update = (request, response) => {
   if (request.body.token !== BekkerToken) {
     response.status(401).send("Invalid token!");
   } else if (
-    request.body.token === BekkerToken &&
-    request.body.environment in request.body &&
-    request.body.image in request.body &&
-    request.body.tag in request.body
+    request.body.token === BekkerToken
+    // request.body.environment.length() > 0 &&
+    // request.body.image.length() > 0 &&
+    // request.body.tag.length() > 0
+
+    // request.body.environment in request.body &&
+    // request.body.image in request.body &&
+    // request.body.tag in request.body
   ) {
     // shell.exec('../ShellScript/updateKubePod.sh')
 
