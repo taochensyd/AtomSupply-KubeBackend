@@ -1,6 +1,4 @@
 const shell = require("shelljs");
-const fs = require("fs");
-
 const BekkerToken = "2sGMxTwKeClnILXa3aK2";
 
 const update = (request, response) => {
