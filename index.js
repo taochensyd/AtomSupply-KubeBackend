@@ -1,7 +1,6 @@
 const express = require("express");
 const app = express();
 const update = require("./routes/update");
-const kubemanagement = require("./routes/kubemanagement");
 require('dotenv').config()
 
 //middleware
@@ -13,7 +12,8 @@ app.get("/hello", (req, res) => {
 });
 
 app.use("/update", update);
-app.use("/api/v1/kubemanagement", kubemanagement);
+// app.use("/api/v1/kubemanagement", kubemanagement);
+// app.use("/api/v1/getLogs", getLogs);
 
 
 const port = 3500;
