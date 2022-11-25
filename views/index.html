@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home</title>
+    <style>
+      div {
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <button onclick="getLogs()">Logs</button>
+      <button onclick="getErrorLogs()">Error Logs</button>
+    </div>
+
+    <div style="width: 50%; display: inline-block">
+      <h1>Logs</h1>
+      <p id="logs"></p>
+    </div>
+
+    <div style="width: 50%; display: inline-block">
+      <h1>Error Logs</h1>
+      <p id="errorLogs"></p>
+    </div>
+
+    <script>
+      function getLogs() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("logs").innerHTML = this.responseText;
+            console.log(this.responseText);
+          }
+        };
+        xhttp.open(
+          "GET",
+          "https://kube-api-endpoint.atom.com.au/api/v1/getOutLog",
+          true
+        );
+        xhttp.send();
+      }
+
+      function getErrorLogs() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+          if (this.readyState == 4 && this.status == 200) {
+            document.getElementById("errorLogs").innerHTML = this.responseText;
+            console.log(this.responseText);
+          }
+        };
+        xhttp.open(
+          "GET",
+          "https://kube-api-endpoint.atom.com.au/api/v1/getErrorLog",
+          true
+        );
+        xhttp.send();
+      }
+    </script>
+  </body>
+</html>
