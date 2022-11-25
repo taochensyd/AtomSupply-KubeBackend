@@ -39,6 +39,10 @@ app.get("/api/v1/getErrorLog", (req, res) => {
   });
 });
 
+app.get('.api/v1/home/logs', (req, res) => {
+  
+})
+
 app.use("/update", update);
 // app.use("/api/v1/kubemanagement", kubemanagement);
 // app.use("/api/v1/getLogs", getLogs);
