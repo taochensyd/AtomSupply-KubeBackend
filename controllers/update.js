@@ -28,6 +28,7 @@ const update = (request, response) => {
         "microk8s kubectl rollout restart deployment uat-develop-portal-api"
       );
       getTimestamp(request.body);
+      console.log(request.body)
       response.json({
         kubeUpdate: `${request.body.image}:${request.body.tag} has been successfully updated`,
       }); // echo the result back
