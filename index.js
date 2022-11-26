@@ -185,7 +185,15 @@ app.get("/api/v1/getErrorLog", (req, res) => {
   });
 });
 
-app.get(".api/v1/home/logs", (req, res) => {});
+app.get("/api/v1/home/logs", (req, res) => {
+  console.log(dataConsoleLogs)
+  res.status(201).json(dataConsoleLogs);
+});
+
+app.get("/api/v1/home/errorlogs", (req, res) => {
+  console.log(dataErrorsLogs)
+  res.status(201).json(dataErrorsLogs);
+});
 
 app.post("/update", (req, res) => {
   //Email Section
