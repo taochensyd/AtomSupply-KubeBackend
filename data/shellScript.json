@@ -1,0 +1,5 @@
+{
+    "uatatomportaldevelop": "microk8s kubectl rollout restart deployment uat-develop-portal-api",
+    "uatcrmcarduimaster": "microk8s kubectl rollout restart deployment uat-master-crmcard-ui",
+    "uatatomportalfrontenddevelop": "microk8s kubectl rollout restart deployment uat-develop-portal-frontend"
+}
