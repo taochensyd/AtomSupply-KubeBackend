@@ -1,14 +1,15 @@
 const express = require("express");
 const app = express();
 // const update = require("./routes/update");
-const path = require('path');
-const cors = require('cors')
+const path = require("path");
+const cors = require("cors");
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 const shell = require("shelljs");
 const BekkerToken = "2sGMxTwKeClnILXa3aK2";
 const script = require("./data/shellScript.json");
+const { toASCII } = require("punycode");
 const dataScriptCLI = [];
 const dataConsoleLogs = [];
 const dataVariables = [];
@@ -35,7 +36,7 @@ const dataErrorsLogs = [];
     }
     let temp = JSON.parse(jsonString);
     dataScriptCLI.push(temp);
-    console.log(dataScriptCLI[0])
+    console.log(dataScriptCLI[0]);
   });
 })();
 
@@ -45,7 +46,7 @@ const dataErrorsLogs = [];
     if (err) {
       console.log("File read failed:", err);
       return;
-    } else if (jsonString === "" | jsonString === null) {
+    } else if ((jsonString === "") | (jsonString === null)) {
       console.log("Empty JSON file");
       return;
     }
@@ -62,7 +63,7 @@ const dataErrorsLogs = [];
     if (err) {
       console.log("File read failed:", err);
       return;
-    } else if (jsonString === "" | jsonString === null) {
+    } else if ((jsonString === "") | (jsonString === null)) {
       console.log("Empty JSON file");
       return;
     }
@@ -72,9 +73,6 @@ const dataErrorsLogs = [];
     }
   });
 })();
-
-
-
 
 // Write logs to JSON files
 
@@ -124,53 +122,57 @@ function writeConsoleLogsToJsonFile(nextID, logs, arguements) {
   console.log(content);
 
   dataConsoleLogs.push(content);
-  console.log(dataConsoleLogs)
+  console.log(dataConsoleLogs);
 
-  fs.writeFile("./data/consoleLogs.json", JSON.stringify(dataConsoleLogs), (err) => {
-    if (err) {
-      console.error(err);
+  fs.writeFile(
+    "./data/consoleLogs.json",
+    JSON.stringify(dataConsoleLogs),
+    (err) => {
+      if (err) {
+        console.error(err);
+      }
+      // file written successfully
+
+      dataVariables[0].logsID = dataVariables[0].logsID + 1;
+      console.log(`dataVariables.logsID: ${dataVariables[0].logsID}`);
+      writeVariablesToJsonFile(dataVariables[0]);
     }
-    // file written successfully
-
-    dataVariables[0].logsID = dataVariables[0].logsID + 1;
-    console.log(`dataVariables.logsID: ${dataVariables[0].logsID}`);
-    writeVariablesToJsonFile(dataVariables[0]);
-  });
+  );
 }
-
 
 function writeVariablesToJsonFile(newCounter) {
-  
   let content = {
-    logsID:newCounter.logsID,
-    errorLogsID:newCounter.errorLogsID
-  }
+    logsID: newCounter.logsID,
+    errorLogsID: newCounter.errorLogsID,
+  };
 
-  fs.writeFile("./data/variables.json", JSON.stringify(content),{encoding:'utf8',flag:'w'}, (err) => {
-    if (err) {
-      console.error(err);
+  fs.writeFile(
+    "./data/variables.json",
+    JSON.stringify(content),
+    { encoding: "utf8", flag: "w" },
+    (err) => {
+      if (err) {
+        console.error(err);
+      }
+      // file written successfully
+      // dataVariables
     }
-    // file written successfully
-    // dataVariables
-  });
+  );
 }
-
 
 //end reading json file
 
 //middleware
 app.use(express.json());
-app.use(cors())
-app.use(express.static(path.join(__dirname, 'build')));
-
-
+app.use(cors());
+app.use(express.static(path.join(__dirname, "build")));
 
 //route
 app.get("/", (req, res) => {
   // res.sendFile("views/index.html", { root: __dirname });
   // // res.sendFile("../AtomSupply-KubeFrontend/build/index.html", { root: __dirname });
   // res.sendFile(path.resolve(__dirname, '../AtomSupply-KubeFrontend/build/', 'index.html'));
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  res.sendFile(path.join(__dirname, "build", "index.html"));
 });
 
 app.get("/hello", (req, res) => {
@@ -200,34 +202,16 @@ app.get("/api/v1/getErrorLog", (req, res) => {
 });
 
 app.get("/api/v1/home/logs", (req, res) => {
-  console.log(dataConsoleLogs)
+  console.log(dataConsoleLogs);
   res.status(200).json(dataConsoleLogs);
 });
 
 app.get("/api/v1/home/errorlogs", (req, res) => {
-  console.log(dataErrorsLogs)
+  console.log(dataErrorsLogs);
   res.status(200).json(dataErrorsLogs);
 });
 
 app.post("/update", (req, res) => {
-  //Email Section
-  var transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: "sydneyau01@gmail.com",
-      pass: "Mimashi123",
-    },
-  });
-
-  var mailOptions = {
-    from: "sydneyau01@gmail.com",
-    to: "tao.chen@atom.com.au",
-    subject: "automatic email from kube backend",
-    text: "text body",
-  };
-
-  //End Email Section
-
   if (req.body.token !== BekkerToken) {
     res.status(401).send("Invalid token!");
   } else if (req.body.token === BekkerToken) {
@@ -236,13 +220,16 @@ app.post("/update", (req, res) => {
       (req.body.tag.toLowerCase() == "develop") &
       (req.body.environment.toLowerCase() == "uat")
     ) {
-      
-
       // shell.exec(
       //   "microk8s kubectl rollout restart deployment uat-develop-portal-api"
       // );
       shell.exec(`${dataScriptCLI[0].uatatomportaldevelop}`);
-      writeConsoleLogsToJsonFile(dataVariables[0].logsID, `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`, req.body)
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
+        req.body
+      );
+      sendEmail().catch(console.error);
       res.json({
         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
       }); // echo the result back
@@ -256,7 +243,6 @@ app.post("/update", (req, res) => {
       //   "microk8s kubectl rollout restart deployment uat-develop-portal-frontend"
       // );
 
-
       // transporter.sendMail(mailOptions, function (error, info) {
       //   if (error) {
       //     console.log(error);
@@ -266,7 +252,11 @@ app.post("/update", (req, res) => {
       // });
 
       shell.exec(`${dataScriptCLI[0].uatatomportalfrontenddevelop}`);
-      writeConsoleLogsToJsonFile(dataVariables[0].logsID, `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`, req.body)
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
+        req.body
+      );
       res.json({
         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
       }); // echo the result back
@@ -280,7 +270,11 @@ app.post("/update", (req, res) => {
       // );
 
       shell.exec(`${dataScriptCLI[0].uatcrmcarduimaster}`);
-      writeConsoleLogsToJsonFile(dataVariables[0].logsID, `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`, req.body)
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
+        req.body
+      );
       res.json({
         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
       }); // echo the result back
@@ -295,6 +289,31 @@ app.post("/update", (req, res) => {
     }
   }
 });
+
+async function sendEmail() {
+  let testAccount = await nodemailer.createTestAccount();
+
+  let transporter = nodemailer.createTransport({
+    host: "172.20.0.50", // webmail.atom.com.au
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: "tchen",
+      pass: "Mimashi123",
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+
+  // send mail with defined transport object
+  let info = await transporter.sendMail({
+    from: "tao.chen@atom.com.au",
+    to: "taochensyd@gmail.com",
+    subject: "automatic email from kube backend",
+    text: "text body",
+  });
+}
 
 const port = 3500;
 
