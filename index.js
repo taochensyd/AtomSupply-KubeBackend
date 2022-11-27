@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express();
 // const update = require("./routes/update");
+const path = require('path');
+const cors = require('cors')
 const fs = require("fs");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
@@ -13,7 +15,7 @@ const dataVariables = [];
 const dataErrorsLogs = [];
 
 // Reading data from local json file
-
+// Read log's ID
 (function () {
   fs.readFile("./data/variables.json", "utf8", (err, jsonString) => {
     if (err) {
@@ -24,6 +26,7 @@ const dataErrorsLogs = [];
   });
 })();
 
+// Read Script Command from JSON array
 (function () {
   fs.readFile("./data/shellScript.json", "utf8", (err, jsonString) => {
     if (err) {
@@ -47,7 +50,9 @@ const dataErrorsLogs = [];
       return;
     }
     let temp = JSON.parse(jsonString);
-    dataConsoleLogs.push(temp);
+    for (let i = 0; i < temp.length; i++) {
+      dataConsoleLogs.push(temp[i]);
+    }
   });
 })();
 
@@ -62,7 +67,9 @@ const dataErrorsLogs = [];
       return;
     }
     let temp = JSON.parse(jsonString);
-    dataErrorsLogs.push(temp);
+    for (let i = 0; i < temp.length; i++) {
+      dataErrorsLogs.push(temp[i]);
+    }
   });
 })();
 
@@ -153,10 +160,17 @@ function writeVariablesToJsonFile(newCounter) {
 
 //middleware
 app.use(express.json());
+app.use(cors())
+app.use(express.static(path.join(__dirname, 'build')));
+
+
 
 //route
 app.get("/", (req, res) => {
-  res.sendFile("views/index.html", { root: __dirname });
+  // res.sendFile("views/index.html", { root: __dirname });
+  // // res.sendFile("../AtomSupply-KubeFrontend/build/index.html", { root: __dirname });
+  // res.sendFile(path.resolve(__dirname, '../AtomSupply-KubeFrontend/build/', 'index.html'));
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 app.get("/hello", (req, res) => {
@@ -187,12 +201,12 @@ app.get("/api/v1/getErrorLog", (req, res) => {
 
 app.get("/api/v1/home/logs", (req, res) => {
   console.log(dataConsoleLogs)
-  res.status(201).json(dataConsoleLogs);
+  res.status(200).json(dataConsoleLogs);
 });
 
 app.get("/api/v1/home/errorlogs", (req, res) => {
   console.log(dataErrorsLogs)
-  res.status(201).json(dataErrorsLogs);
+  res.status(200).json(dataErrorsLogs);
 });
 
 app.post("/update", (req, res) => {
