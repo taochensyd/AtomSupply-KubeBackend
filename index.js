@@ -10,10 +10,12 @@ const shell = require("shelljs");
 const BekkerToken = "2sGMxTwKeClnILXa3aK2";
 const script = require("./data/shellScript.json");
 const { toASCII } = require("punycode");
+const { exec } = require("child_process");
 const dataScriptCLI = [];
 const dataConsoleLogs = [];
 const dataVariables = [];
 const dataErrorsLogs = [];
+const k8sPodsJSON = [];
 
 // Reading data from local json file
 // Read log's ID
@@ -211,6 +213,16 @@ app.get("/api/v1/home/errorlogs", (req, res) => {
   res.status(200).json(dataErrorsLogs);
 });
 
+app.get("/api/v1/k8s/getAllRunningPods", (req, res) => {
+  let cli = "microk8s kubectl get pods -o=jsonpath='{.items}'";
+  let temp = shell.exec(cli)
+  // for(let i=0; i<json.length; i++) {
+    k8sPodsJSON.push(temp.stdout)
+  // }
+  console.log(k8sPodsJSON[0])
+  res.status(200).json(k8sPodsJSON[0])
+});
+
 app.post("/update", (req, res) => {
   if (req.body.token !== BekkerToken) {
     res.status(401).send("Invalid token!");
@@ -229,7 +241,7 @@ app.post("/update", (req, res) => {
         `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
         req.body
       );
-      sendEmail().catch(console.error);
+      // sendEmail().catch(console.error);
       res.json({
         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
       }); // echo the result back
