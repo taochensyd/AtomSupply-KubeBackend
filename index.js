@@ -215,12 +215,12 @@ app.get("/api/v1/home/errorlogs", (req, res) => {
 
 app.get("/api/v1/k8s/getAllRunningPods", (req, res) => {
   let cli = "microk8s kubectl get pods -o=jsonpath='{.items}'";
-  let temp = shell.exec(cli)
+  let temp = shell.exec(cli);
   // for(let i=0; i<json.length; i++) {
-    k8sPodsJSON.push(temp.stdout)
+  k8sPodsJSON.push(temp.stdout);
   // }
-  console.log(k8sPodsJSON[0])
-  res.status(200).json(k8sPodsJSON[0])
+  console.log(k8sPodsJSON[0]);
+  res.status(200).json(k8sPodsJSON[0]);
 });
 
 app.post("/update", (req, res) => {
@@ -302,29 +302,58 @@ app.post("/update", (req, res) => {
   }
 });
 
-async function sendEmail() {
-  let testAccount = await nodemailer.createTestAccount();
+app.get("/api/v1/update/:deploymentName", (req, res) => {
+  let temp = `microk8s kubectl rollout restart deployment ${req.query.environment}-${req.query.image}-${req.query.tag}`;
+  let output = shell.exec(temp);
+  if (output.includes("restarted")) {
+    res.status(200).send(`${output}`);
+  } else {
+    res.status(400).send(`${output}`);
+  }
+});
 
-  let transporter = nodemailer.createTransport({
-    host: "172.20.0.50", // webmail.atom.com.au
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: "tchen",
-      pass: "Mimashi123",
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+app.post("/api/v1/sendApprovalEmail", (req, res) => {
+  if (sendEmailToUpdate(req.body)) {
+    res.status(200).send("Email Sent");
+  } else {
+    res.status(400).send("Fail to sent email");
+  }
+});
 
-  // send mail with defined transport object
-  let info = await transporter.sendMail({
-    from: "tao.chen@atom.com.au",
-    to: "taochensyd@gmail.com",
-    subject: "automatic email from kube backend",
-    text: "text body",
-  });
+async function sendEmailToUpdate(message) {
+  try {
+    let date_ob = new Date();
+    let testAccount = await nodemailer.createTestAccount();
+
+    let transporter = nodemailer.createTransport({
+      host: "172.20.0.50", // webmail.atom.com.au
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: "tchen",
+        pass: "Mimashi123",
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
+
+    // send mail with defined transport object
+    let info = await transporter.sendMail({
+      from: '"Kube update alert(Test)" <tao.chen@atom.com.au>',
+      to: "InformationTechnology@atom.com.au",
+      subject: `Waiting for update: ${
+        message.environment
+      }-${message.image.replace("_", "-")}-${message.tag}`,
+      text: `https://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${
+        message.environment
+      }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
+    });
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
 }
 
 const port = 3500;
