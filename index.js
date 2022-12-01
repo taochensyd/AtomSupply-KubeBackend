@@ -223,81 +223,93 @@ app.get("/api/v1/k8s/getAllRunningPods", (req, res) => {
   res.status(200).json(k8sPodsJSON[0]);
 });
 
+// app.post("/update", (req, res) => {
+//   if (req.body.token !== BekkerToken) {
+//     res.status(401).send("Invalid token!");
+//   } else if (req.body.token === BekkerToken) {
+//     if (
+//       (req.body.image.toLowerCase() == "atomportal") &
+//       (req.body.tag.toLowerCase() == "develop") &
+//       (req.body.environment.toLowerCase() == "uat")
+//     ) {
+//       // shell.exec(
+//       //   "microk8s kubectl rollout restart deployment uat-develop-portal-api"
+//       // );
+//       shell.exec(`${dataScriptCLI[0].uatatomportaldevelop}`);
+//       writeConsoleLogsToJsonFile(
+//         dataVariables[0].logsID,
+//         `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
+//         req.body
+//       );
+//       // sendEmail().catch(console.error);
+//       res.json({
+//         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
+//       }); // echo the result back
+//       //shell.exec('../ShellScript/updatePortalAPI.sh')
+//     } else if (
+//       (req.body.image.toLowerCase() == "atomportal_frontend") &
+//       (req.body.tag.toLowerCase() == "develop") &
+//       (req.body.environment.toLowerCase() == "uat")
+//     ) {
+//       // shell.exec(
+//       //   "microk8s kubectl rollout restart deployment uat-develop-portal-frontend"
+//       // );
+
+//       // transporter.sendMail(mailOptions, function (error, info) {
+//       //   if (error) {
+//       //     console.log(error);
+//       //   } else {
+//       //     console.log("Email sent: " + info.res);
+//       //   }
+//       // });
+
+//       shell.exec(`${dataScriptCLI[0].uatatomportalfrontenddevelop}`);
+//       writeConsoleLogsToJsonFile(
+//         dataVariables[0].logsID,
+//         `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
+//         req.body
+//       );
+//       res.json({
+//         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
+//       }); // echo the result back
+//     } else if (
+//       (req.body.image.toLowerCase() == "crmcard_ui") &
+//       (req.body.tag.toLowerCase() == "master") &
+//       (req.body.environment.toLowerCase() == "uat")
+//     ) {
+//       // shell.exec(
+//       //   "microk8s kubectl rollout restart deployment uat-master-crmcard-ui"
+//       // );
+
+//       shell.exec(`${dataScriptCLI[0].uatcrmcarduimaster}`);
+//       writeConsoleLogsToJsonFile(
+//         dataVariables[0].logsID,
+//         `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
+//         req.body
+//       );
+//       res.json({
+//         kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
+//       }); // echo the result back
+//     } else {
+//       writeErrorLogsToJsonFile(
+//         dataVariables[0].errorLogsID,
+//         "Invalid Parameters",
+//         req.body
+//       );
+
+//       res.status(400).send("Invalid Parameters");
+//     }
+//   }
+// });
+
 app.post("/update", (req, res) => {
   if (req.body.token !== BekkerToken) {
     res.status(401).send("Invalid token!");
-  } else if (req.body.token === BekkerToken) {
-    if (
-      (req.body.image.toLowerCase() == "atomportal") &
-      (req.body.tag.toLowerCase() == "develop") &
-      (req.body.environment.toLowerCase() == "uat")
-    ) {
-      // shell.exec(
-      //   "microk8s kubectl rollout restart deployment uat-develop-portal-api"
-      // );
-      shell.exec(`${dataScriptCLI[0].uatatomportaldevelop}`);
-      writeConsoleLogsToJsonFile(
-        dataVariables[0].logsID,
-        `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
-        req.body
-      );
-      // sendEmail().catch(console.error);
-      res.json({
-        kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
-      }); // echo the result back
-      //shell.exec('../ShellScript/updatePortalAPI.sh')
-    } else if (
-      (req.body.image.toLowerCase() == "atomportal_frontend") &
-      (req.body.tag.toLowerCase() == "develop") &
-      (req.body.environment.toLowerCase() == "uat")
-    ) {
-      // shell.exec(
-      //   "microk8s kubectl rollout restart deployment uat-develop-portal-frontend"
-      // );
-
-      // transporter.sendMail(mailOptions, function (error, info) {
-      //   if (error) {
-      //     console.log(error);
-      //   } else {
-      //     console.log("Email sent: " + info.res);
-      //   }
-      // });
-
-      shell.exec(`${dataScriptCLI[0].uatatomportalfrontenddevelop}`);
-      writeConsoleLogsToJsonFile(
-        dataVariables[0].logsID,
-        `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
-        req.body
-      );
-      res.json({
-        kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
-      }); // echo the result back
-    } else if (
-      (req.body.image.toLowerCase() == "crmcard_ui") &
-      (req.body.tag.toLowerCase() == "master") &
-      (req.body.environment.toLowerCase() == "uat")
-    ) {
-      // shell.exec(
-      //   "microk8s kubectl rollout restart deployment uat-master-crmcard-ui"
-      // );
-
-      shell.exec(`${dataScriptCLI[0].uatcrmcarduimaster}`);
-      writeConsoleLogsToJsonFile(
-        dataVariables[0].logsID,
-        `kubeUpdate: ${req.body.image}:${req.body.tag} has been successfully updated`,
-        req.body
-      );
-      res.json({
-        kubeUpdate: `${req.body.image}:${req.body.tag} has been successfully updated`,
-      }); // echo the result back
+  } else {
+    if (sendEmailToUpdate(req.body)) {
+      res.status(200).send("Email Sent");
     } else {
-      writeErrorLogsToJsonFile(
-        dataVariables[0].errorLogsID,
-        "Invalid Parameters",
-        req.body
-      );
-
-      res.status(400).send("Invalid Parameters");
+      res.status(400).send("Fail to sent email");
     }
   }
 });
@@ -323,6 +335,24 @@ app.post("/api/v1/sendApprovalEmail", (req, res) => {
 async function sendEmailToUpdate(message) {
   try {
     let date_ob = new Date();
+
+    // adjust 0 before single digit date
+    let date = ("0" + date_ob.getDate()).slice(-2);
+
+    // current month
+    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+
+    // current year
+    let year = date_ob.getFullYear();
+
+    // current hours
+    let hours = date_ob.getHours();
+
+    // current minutes
+    let minutes = date_ob.getMinutes();
+
+    // current seconds
+    let seconds = date_ob.getSeconds();
     let testAccount = await nodemailer.createTestAccount();
 
     let transporter = nodemailer.createTransport({
@@ -340,12 +370,20 @@ async function sendEmailToUpdate(message) {
 
     // send mail with defined transport object
     let info = await transporter.sendMail({
-      from: '"Kube update alert(Test)" <tao.chen@atom.com.au>',
-      to: "InformationTechnology@atom.com.au",
+    //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
+      // to: "InformationTechnology@atom.com.au",
+        from: '"Kube-Alert" <tao.chen@atom.com.au>',
+      to: "kube-alerts@atom.com.au",
       subject: `Waiting for update: ${
         message.environment
       }-${message.image.replace("_", "-")}-${message.tag}`,
-      text: `https://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${
+      text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${
+        Intl.DateTimeFormat().resolvedOptions().timeZone
+      })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${
+        message.environment
+      }\nImage: ${message.image}\nTag: ${
+        message.tag
+      }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${
         message.environment
       }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
     });
