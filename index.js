@@ -83,9 +83,8 @@ function writeErrorLogsToJsonFile(nextID, errorLogs, arguements) {
   let content = {
     ID: nextID,
     DateTime: `${currentTimeStamp.getHours()}:${currentTimeStamp.getMinutes()}:${currentTimeStamp.getSeconds()}`,
-    Date: `${currentTimeStamp.getDate()}/${
-      currentTimeStamp.getMonth() + 1
-    }/${currentTimeStamp.getFullYear()}`,
+    Date: `${currentTimeStamp.getDate()}/${currentTimeStamp.getMonth() + 1
+      }/${currentTimeStamp.getFullYear()}`,
     Message: errorLogs,
     Parameter: arguements,
   };
@@ -114,9 +113,8 @@ function writeConsoleLogsToJsonFile(nextID, logs, arguements) {
   let content = {
     ID: nextID,
     DateTime: `${currentTimeStamp.getHours()}:${currentTimeStamp.getMinutes()}:${currentTimeStamp.getSeconds()}`,
-    Date: `${currentTimeStamp.getDate()}/${
-      currentTimeStamp.getMonth() + 1
-    }/${currentTimeStamp.getFullYear()}`,
+    Date: `${currentTimeStamp.getDate()}/${currentTimeStamp.getMonth() + 1
+      }/${currentTimeStamp.getFullYear()}`,
     Message: logs,
     Parameter: arguements,
   };
@@ -317,9 +315,23 @@ app.post("/update", (req, res) => {
 app.get("/api/v1/update/:deploymentName", (req, res) => {
   let temp = `microk8s kubectl rollout restart deployment ${req.query.environment}-${req.query.image}-${req.query.tag}`;
   let output = shell.exec(temp);
+  writeConsoleLogsToJsonFile(
+    dataVariables[0].logsID,
+    output
+  );
   if (output.includes("restarted")) {
+    writeConsoleLogsToJsonFile(
+      dataVariables[0].logsID,
+      output,
+      req.body
+    );
     res.status(200).send(`${output}`);
   } else {
+    writeErrorLogsToJsonFile(
+              dataVariables[0].errorLogsID,
+              output,
+              req.body
+            );
     res.status(400).send(`${output}`);
   }
 });
@@ -360,8 +372,8 @@ async function sendEmailToUpdate(message) {
       port: 587,
       secure: false, // true for 465, false for other ports
       auth: {
-        user: "tchen",
-        pass: "Mimashi123",
+        user: "noreply",
+        pass: "3xszmw2dfjpOSMKRYiZs",
       },
       tls: {
         rejectUnauthorized: false,
@@ -370,22 +382,17 @@ async function sendEmailToUpdate(message) {
 
     // send mail with defined transport object
     let info = await transporter.sendMail({
-    //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
+      //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
       // to: "InformationTechnology@atom.com.au",
-        from: '"Kube-Alert" <tao.chen@atom.com.au>',
+      from: '"Kube-Alert" <noreply@atom.com.au>',
       to: "kube-alerts@atom.com.au",
-      subject: `Waiting for update: ${
-        message.environment
-      }-${message.image.replace("_", "-")}-${message.tag}`,
-      text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${
-        Intl.DateTimeFormat().resolvedOptions().timeZone
-      })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${
-        message.environment
-      }\nImage: ${message.image}\nTag: ${
-        message.tag
-      }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${
-        message.environment
-      }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
+      subject: `Waiting for update: ${message.environment
+        }-${message.image.replace("_", "-")}-${message.tag}`,
+      text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${Intl.DateTimeFormat().resolvedOptions().timeZone
+        })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${message.environment
+        }\nImage: ${message.image}\nTag: ${message.tag
+        }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${message.environment
+        }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
     });
     return true;
   } catch (error) {
