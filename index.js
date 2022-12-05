@@ -346,16 +346,105 @@ app.post("/api/v1/sendApprovalEmail", (req, res) => {
 });
 
 app.post("/api/v1/k8s/createDeploymentAndService", (req, res) => {
-  
-  
-  let output = shell.exec("")
 
-  if (output.includes("created")) {
-    res.status(201).send(output)
+  let podDeploymentTemplate = JSON.parse(`{
+    "apiVersion": "apps/v1",
+    "kind": "Deployment",
+    "metadata": {
+      "name": "${req.body.environment}-${req.body.image}-${req.body.tag}",
+      "labels": {
+        "app": "${req.body.environment}-${req.body.image}-${req.body.tag}"
+      }
+    },
+    "spec": {
+      "replicas": ${req.body.replicas},
+      "selector": {
+        "matchLabels": {
+          "app": "${req.body.environment}-${req.body.image}-${req.body.tag}"
+        }
+      },
+      "strategy": {
+        "rollingUpdate": {
+          "maxSurge": 1,
+          "maxUnavailable": 1
+        }
+      },
+      "template": {
+        "metadata": {
+          "labels": {
+            "app": "${req.body.environment}-${req.body.image}-${req.body.tag}"
+          }
+        },
+        "spec": {
+          "containers": [
+            {
+              "name": "${req.body.environment}-${req.body.image}-${req.body.tag}",
+              "image": "atomdockerhub/${req.body.image}:${req.body.tag}",
+              "imagePullPolicy": "Always",
+              "ports": [
+                {
+                  "containerPort": 80
+                }
+              ]
+            }
+          ],
+          "imagePullSecrets": [
+            {
+              "name": "regcred"
+            }
+          ]
+        }
+      }
+    }
+  }`);
+
+  let podServiceTemplate = JSON.parse(`{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "${req.body.environment}-${req.body.image}-${req.body.tag}-service"
+  },
+    "spec": {
+      "type": "NodePort",
+      "selector": {
+        "app": "${req.body.environment}-${req.body.image}-${req.body.tag}"
+      },
+      "ports": [
+        {
+          "protocol": "TCP",
+          "port": 5000,
+          "targetPort": 80,
+          "nodePort": ${req.body.nodePort}
+        }
+      ]
+    }
+  }`);
+  const path = `../k8s_yaml/${req.body.environment}-${req.body.image}-${req.body.tag}.yaml`;
+  let content = `${YAML.stringify(podDeploymentTemplate)}\n---\n${YAML.stringify(podServiceTemplate)}`
+
+  if (fs.existsSync(path)) {
+    console.log('file exists');
+    res.status(400).send(`${req.body.environment}-${req.body.image}-${req.body.tag}.yaml file exists`);
   } else {
-    res.status(400).send(output);
-  }
+    let creatPodYAMLCLI = `touch ../k8s_yaml/${req.body.environment}-${req.body.image}-${req.body.tag}.yaml`;
+    let output = shell.exec(creatPodYAMLCLI)
+    fs.writeFile(path, content, err => {
+      if (err) {
+        console.error(err);
+      } else {
+        let createdOutput = shell.exec(`microk8s kubectl apply -f ../k8s_yaml/${req.body.environment}-${req.body.image}-${req.body.tag}.yaml`);
+        if (createdOutput.includes("created")) {
+          res.status(201).send(createdOutput)
+        } else {
+          res.status(400).send(createdOutput);
+        }
+      }
+      // file written successfully
+    });
 
+
+
+  }
 });
 
 async function sendEmailToUpdate(message) {
