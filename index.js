@@ -11,6 +11,7 @@ const BekkerToken = "2sGMxTwKeClnILXa3aK2";
 const script = require("./data/shellScript.json");
 const { toASCII } = require("punycode");
 const { exec } = require("child_process");
+const YAML = require('json-to-pretty-yaml');
 const dataScriptCLI = [];
 const dataConsoleLogs = [];
 const dataVariables = [];
@@ -328,10 +329,10 @@ app.get("/api/v1/update/:deploymentName", (req, res) => {
     res.status(200).send(`${output}`);
   } else {
     writeErrorLogsToJsonFile(
-              dataVariables[0].errorLogsID,
-              output,
-              req.body
-            );
+      dataVariables[0].errorLogsID,
+      output,
+      req.body
+    );
     res.status(400).send(`${output}`);
   }
 });
@@ -342,6 +343,19 @@ app.post("/api/v1/sendApprovalEmail", (req, res) => {
   } else {
     res.status(400).send("Fail to sent email");
   }
+});
+
+app.post("/api/v1/k8s/createDeploymentAndService", (req, res) => {
+  
+  
+  let output = shell.exec("")
+
+  if (output.includes("created")) {
+    res.status(201).send(output)
+  } else {
+    res.status(400).send(output);
+  }
+
 });
 
 async function sendEmailToUpdate(message) {
