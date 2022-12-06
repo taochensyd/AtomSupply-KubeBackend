@@ -117,7 +117,7 @@ function writeConsoleLogsToJsonFile(nextID, logs, arguements) {
     Date: `${currentTimeStamp.getDate()}/${currentTimeStamp.getMonth() + 1
       }/${currentTimeStamp.getFullYear()}`,
     Message: logs,
-    Parameter: arguements,
+    logParameter: arguements,
   };
 
   console.log(content);
@@ -346,7 +346,7 @@ app.post("/api/v1/sendApprovalEmail", (req, res) => {
 });
 
 app.post("/api/v1/k8s/createDeploymentAndService", (req, res) => {
-
+  console.log(req.body);
   let podDeploymentTemplate = JSON.parse(`{
     "apiVersion": "apps/v1",
     "kind": "Deployment",
@@ -432,7 +432,8 @@ app.post("/api/v1/k8s/createDeploymentAndService", (req, res) => {
       if (err) {
         console.error(err);
       } else {
-        let createdOutput = shell.exec(`microk8s kubectl apply -f ../k8s_yaml/${req.body.environment}-${req.body.image}-${req.body.tag}.yaml`);
+        // let createdOutput = shell.exec(`microk8s kubectl apply -f ../k8s_yaml/${req.body.environment}-${req.body.image}-${req.body.tag}.yaml`);
+        let createdOutput = "Reach create pod output"
         if (createdOutput.includes("created")) {
           res.status(201).send(createdOutput)
         } else {
@@ -447,62 +448,67 @@ app.post("/api/v1/k8s/createDeploymentAndService", (req, res) => {
   }
 });
 
+app.post("/api/v1/k8s/createDeploymentAndServiceTest", (req, res) => {
+  console.log(req.body);
+  res.json(req.body);
+});
+
 async function sendEmailToUpdate(message) {
-  try {
-    let date_ob = new Date();
+    try {
+      let date_ob = new Date();
 
-    // adjust 0 before single digit date
-    let date = ("0" + date_ob.getDate()).slice(-2);
+      // adjust 0 before single digit date
+      let date = ("0" + date_ob.getDate()).slice(-2);
 
-    // current month
-    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+      // current month
+      let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
 
-    // current year
-    let year = date_ob.getFullYear();
+      // current year
+      let year = date_ob.getFullYear();
 
-    // current hours
-    let hours = date_ob.getHours();
+      // current hours
+      let hours = date_ob.getHours();
 
-    // current minutes
-    let minutes = date_ob.getMinutes();
+      // current minutes
+      let minutes = date_ob.getMinutes();
 
-    // current seconds
-    let seconds = date_ob.getSeconds();
-    let testAccount = await nodemailer.createTestAccount();
+      // current seconds
+      let seconds = date_ob.getSeconds();
+      let testAccount = await nodemailer.createTestAccount();
 
-    let transporter = nodemailer.createTransport({
-      host: "172.20.0.50", // webmail.atom.com.au
-      port: 587,
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: "noreply",
-        pass: "3xszmw2dfjpOSMKRYiZs",
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+      let transporter = nodemailer.createTransport({
+        host: "172.20.0.50", // webmail.atom.com.au
+        port: 587,
+        secure: false, // true for 465, false for other ports
+        auth: {
+          user: "noreply",
+          pass: "3xszmw2dfjpOSMKRYiZs",
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
 
-    // send mail with defined transport object
-    let info = await transporter.sendMail({
-      //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
-      // to: "InformationTechnology@atom.com.au",
-      from: '"Kube-Alert" <noreply@atom.com.au>',
-      to: "kube-alerts@atom.com.au",
-      subject: `Waiting for update: ${message.environment
-        }-${message.image.replace("_", "-")}-${message.tag}`,
-      text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${Intl.DateTimeFormat().resolvedOptions().timeZone
-        })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${message.environment
-        }\nImage: ${message.image}\nTag: ${message.tag
-        }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${message.environment
-        }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
-    });
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
+      // send mail with defined transport object
+      let info = await transporter.sendMail({
+        //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
+        // to: "InformationTechnology@atom.com.au",
+        from: '"Kube-Alert" <noreply@atom.com.au>',
+        to: "kube-alerts@atom.com.au",
+        subject: `Waiting for update: ${message.environment
+          }-${message.image.replace("_", "-")}-${message.tag}`,
+        text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${Intl.DateTimeFormat().resolvedOptions().timeZone
+          })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${message.environment
+          }\nImage: ${message.image}\nTag: ${message.tag
+          }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${message.environment
+          }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
+      });
+      return true;
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
   }
-}
 
 const port = 3500;
 
