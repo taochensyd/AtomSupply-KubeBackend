@@ -302,38 +302,78 @@ app.get("/api/v1/k8s/getAllRunningPods", (req, res) => {
 // });
 
 app.post("/update", (req, res) => {
+
+  function checkOutput(output) {
+    if (output.includes("restarted")) {
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        output,
+        req.body
+      );
+      res.status(200).send(`${output}`);
+    } else {
+      writeErrorLogsToJsonFile(
+        dataVariables[0].errorLogsID,
+        output,
+        req.body
+      );
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        output
+      );
+      res.status(400).send(`${output}`);
+    }
+  }
   if (req.body.token !== BekkerToken) {
     res.status(401).send("Invalid token!");
-  } else {
+  } else if (req.body.environment === "uat" && req.body.tag === "staging") {
     if (sendEmailToUpdate(req.body)) {
       res.status(200).send("Email Sent");
     } else {
       res.status(400).send("Fail to sent email");
     }
+  } else {
+    let text = `${req.body.image}:${req.body.tag} has been successfully updated`
+    if (req.body.image === "atomportal") {
+      let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.body.environment}-atomportal-api-${req.body.tag}`);
+      checkOutput(output);
+    } else {
+      let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.body.environment}-${req.body.image}-${req.body.tag}`);
+      checkOutput(output);
+    }
+    res.status(200).send(text);
   }
 });
 
 app.get("/api/v1/update/:deploymentName", (req, res) => {
-  let temp = `microk8s kubectl rollout restart deployment ${req.query.environment}-${req.query.image}-${req.query.tag}`;
-  let output = shell.exec(temp);
-  writeConsoleLogsToJsonFile(
-    dataVariables[0].logsID,
-    output
-  );
-  if (output.includes("restarted")) {
-    writeConsoleLogsToJsonFile(
-      dataVariables[0].logsID,
-      output,
-      req.body
-    );
-    res.status(200).send(`${output}`);
+  function checkOutput(output) {
+    if (output.includes("restarted")) {
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        output,
+        req.body
+      );
+      res.status(200).send(`${output}`);
+    } else {
+      writeErrorLogsToJsonFile(
+        dataVariables[0].errorLogsID,
+        output,
+        req.body
+      );
+      writeConsoleLogsToJsonFile(
+        dataVariables[0].logsID,
+        output
+      );
+      res.status(400).send(`${output}`);
+    }
+  }
+
+  if (req.query.image.toLowerCase() === "atomportal") {
+    let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.query.environment}-atomportal-api-${req.query.tag}`);
+    checkOutput(output);
   } else {
-    writeErrorLogsToJsonFile(
-      dataVariables[0].errorLogsID,
-      output,
-      req.body
-    );
-    res.status(400).send(`${output}`);
+    let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.query.environment}-${req.query.image}-${req.query.tag}`);
+    checkOutput(output);
   }
 });
 
@@ -454,61 +494,61 @@ app.post("/api/v1/k8s/createDeploymentAndServiceTest", (req, res) => {
 });
 
 async function sendEmailToUpdate(message) {
-    try {
-      let date_ob = new Date();
+  try {
+    let date_ob = new Date();
 
-      // adjust 0 before single digit date
-      let date = ("0" + date_ob.getDate()).slice(-2);
+    // adjust 0 before single digit date
+    let date = ("0" + date_ob.getDate()).slice(-2);
 
-      // current month
-      let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+    // current month
+    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
 
-      // current year
-      let year = date_ob.getFullYear();
+    // current year
+    let year = date_ob.getFullYear();
 
-      // current hours
-      let hours = date_ob.getHours();
+    // current hours
+    let hours = date_ob.getHours();
 
-      // current minutes
-      let minutes = date_ob.getMinutes();
+    // current minutes
+    let minutes = date_ob.getMinutes();
 
-      // current seconds
-      let seconds = date_ob.getSeconds();
-      let testAccount = await nodemailer.createTestAccount();
+    // current seconds
+    let seconds = date_ob.getSeconds();
+    let testAccount = await nodemailer.createTestAccount();
 
-      let transporter = nodemailer.createTransport({
-        host: "172.20.0.50", // webmail.atom.com.au
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: "noreply",
-          pass: "3xszmw2dfjpOSMKRYiZs",
-        },
-        tls: {
-          rejectUnauthorized: false,
-        },
-      });
+    let transporter = nodemailer.createTransport({
+      host: "172.20.0.50", // webmail.atom.com.au
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: "noreply",
+        pass: "3xszmw2dfjpOSMKRYiZs",
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
 
-      // send mail with defined transport object
-      let info = await transporter.sendMail({
-        //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
-        // to: "InformationTechnology@atom.com.au",
-        from: '"Kube-Alert" <noreply@atom.com.au>',
-        to: "kube-alerts@atom.com.au",
-        subject: `Waiting for update: ${message.environment
-          }-${message.image.replace("_", "-")}-${message.tag}`,
-        text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${Intl.DateTimeFormat().resolvedOptions().timeZone
-          })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${message.environment
-          }\nImage: ${message.image}\nTag: ${message.tag
-          }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${message.environment
-          }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
-      });
-      return true;
-    } catch (error) {
-      console.log(error);
-      return false;
-    }
+    // send mail with defined transport object
+    let info = await transporter.sendMail({
+      //   from: '"Kube-Alert" <kube-alerts@atom.com.au>',
+      // to: "InformationTechnology@atom.com.au",
+      from: '"Kube-Alert" <noreply@atom.com.au>',
+      to: "kube-alerts@atom.com.au",
+      subject: `Waiting for update: ${message.environment
+        }-${message.image.replace("_", "-")}-${message.tag}`,
+      text: `Date & Time: ${date}/${month}/${year} ${hours}:${minutes}:${seconds} (${Intl.DateTimeFormat().resolvedOptions().timeZone
+        })\nApplication: Microk8s Kubernetes Cluster\nWaiting for update: \nEnvironemnt: ${message.environment
+        }\nImage: ${message.image}\nTag: ${message.tag
+        }\n\nClick below link to update:\nhttps://kube-api-endpoint.atom.com.au/api/v1/update/deploymentName?environment=${message.environment
+        }&image=${message.image.replace("_", "-")}&tag=${message.tag}`,
+    });
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
   }
+}
 
 const port = 3500;
 
