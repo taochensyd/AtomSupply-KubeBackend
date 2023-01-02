@@ -521,8 +521,8 @@ async function sendEmailToUpdate(message) {
       port: 587,
       secure: false, // true for 465, false for other ports
       auth: {
-        user: "noreply",
-        pass: "3xszmw2dfjpOSMKRYiZs",
+        user: process.env.EmailUsername,
+        pass: process.env.EmailPassword,
       },
       tls: {
         rejectUnauthorized: false,
@@ -550,6 +550,6 @@ async function sendEmailToUpdate(message) {
   }
 }
 
-const port = 3500;
+const port = process.env.PORT || 3500;
 
 app.listen(port, console.log(`Server is listening on port ${port}`));
