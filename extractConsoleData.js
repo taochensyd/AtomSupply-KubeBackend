@@ -1,4 +1,4 @@
-[
+const data = [
   {
     "ID": 3,
     "DateTime": "5:30:39",
@@ -520,3 +520,25 @@
     }
   }
 ]
+
+
+console.log("before reading json");
+console.log(`data length: ${data.length}`)
+
+const obj = JSON.parse(data);
+
+console.log("after reading json");
+
+for (let i = 0; i < obj.length; i++) {
+  // console.log(typeof(logData))
+  console.log(`i: ${i}`)
+  if (logData[i].hasOwnProperty("logParameter") === false) {
+    continue;
+  } else {
+    let insertData = `INSERT INTO KubeUpdateLogs (LogID, UpdateTimeStamp, EnvironmentName, ImageName, TagName, ConsoleMessage) VALUES ("${logData[i].ID}", "${logData[i].DateTime} ${logData[i].Date}", "${logData[i].logParameter.environment}", "${logData[i].logParameter.image}", "${logData[i].logParameter.tag}", "${logData[i].Message}");`;
+    console.log(insertData);
+  }
+
+
+
+}
