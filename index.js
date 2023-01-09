@@ -302,7 +302,11 @@ app.get("/api/v1/k8s/getAllRunningPods", (req, res) => {
 // });
 
 app.post("/update", (req, res) => {
-
+  let currentTimeStamp = shell.exec("date");
+  let tempOutputObj = {
+    Date: currentTimeStamp,
+    message: ""
+  }
   function checkOutput(output) {
     if (output.includes("restarted")) {
       writeConsoleLogsToJsonFile(
@@ -310,7 +314,9 @@ app.post("/update", (req, res) => {
         output,
         req.body
       );
-      res.status(200).send(`${output}`);
+      tempOutputObj.message = output;
+      let postbackData = JSON.stringify(tempOutputObj)
+      res.status(200).send(`${postbackData}`);
     } else {
       writeErrorLogsToJsonFile(
         dataVariables[0].errorLogsID,
@@ -321,16 +327,22 @@ app.post("/update", (req, res) => {
         dataVariables[0].logsID,
         output
       );
-      res.status(400).send(`${output}`);
+      tempOutputObj.message = output;
+      let postbackData = JSON.stringify(tempOutputObj)
+      res.status(400).send(`${postbackData}`);
     }
   }
   if (req.body.token !== BekkerToken) {
     res.status(401).send("Invalid token!");
   } else if (req.body.environment === "uat" && req.body.tag === "staging") {
     if (sendEmailToUpdate(req.body)) {
-      res.status(200).send("Email Sent");
+      tempOutputObj.message = "Email Sent";
+      let postbackData = JSON.stringify(tempOutputObj)
+      res.status(200).send(`${postbackData}`);
     } else {
-      res.status(400).send("Fail to sent email");
+      tempOutputObj.message = "Fail to sent email";
+      let postbackData = JSON.stringify(tempOutputObj)
+      res.status(400).send(`${postbackData}`);
     }
   } else {
     let text = `${req.body.image}:${req.body.tag} has been successfully updated`
@@ -338,10 +350,12 @@ app.post("/update", (req, res) => {
       let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.body.environment}-atomportal-api-${req.body.tag}`);
       checkOutput(output);
     } else {
-      let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.body.environment}-${req.body.image}-${req.body.tag}`);
+      let output = shell.exec(`microk8s kubectl rollout restart deployment ${req.body.environment}-${req.body.image.replace("_", "-")}-${req.body.tag}`);
       checkOutput(output);
     }
-    res.status(200).send(text);
+    tempOutputObj.message = text;
+      let postbackData = JSON.stringify(tempOutputObj)
+      res.status(200).send(`${postbackData}`);
   }
 });
 
